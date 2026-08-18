@@ -1,7 +1,7 @@
 import Player from "../models/player.model.js";
 import Round from "../models/round.model.js";
 import { generateCard } from "../utils/card.js";
-import z from "zod";
+import z, { date } from "zod";
 
 export const startGameController = async (req, res) => {
     try {
@@ -88,4 +88,31 @@ export const startRoundController = async (req, res) => {
     });
 };
 
-//6a84663b11e14da41bd1cd08
+export const myRoundController = async (req, res) => {
+    const player = req.player;
+
+    const round = await Round.findOne({
+        playerId: player._id,
+        status: "in_progress",
+    });
+
+    if (!round) {
+        return res.json({
+            success: true,
+            round: null,
+        });
+    }
+
+    const response = {
+        roundId: round._id,
+        playerCards: round.playerCards,
+        dealerUpCard: round.dealerCards[0],
+        bet: round.bet,
+        status: round.status,
+    };
+
+    res.json({
+        success: true,
+        data: response,
+    });
+};
