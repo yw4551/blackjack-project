@@ -1,6 +1,7 @@
 import express from "express";
 import "dotenv/config";
 import connectDB from "./config/database.js";
+import gameRouter from "./routes/game.route.js";
 
 const PORT = process.env.PORT;
 
@@ -21,5 +22,7 @@ app.get("/health", (req, res) => {
         message: "Server is healthy",
     });
 });
+
+app.use("/", gameRouter);
 
 startServer();
