@@ -3,6 +3,7 @@ import Round from "../models/round.model.js";
 import { generateCard } from "../utils/card.js";
 import z, { date, success } from "zod";
 import { calculateHandValue } from "../utils/hand.js";
+import { playDealerTurn } from "../utils/dealer.js";
 
 export const startGameController = async (req, res) => {
     try {
@@ -148,6 +149,54 @@ export const hitController = async (req, res) => {
         data: {
             playerCards: round.playerCards,
             playerTotal,
+            status: round.status,
+            chips: player.chips,
+        },
+    });
+};
+
+export const standController = async (req, res) => {
+    const player = req.player;
+
+    const round = await Round.findOne({
+        playerId: player._id,
+        status: "in_progress",
+    });
+
+    if (!round) {
+        return res.status(404).json({
+            success: false,
+            error: "No active round",
+        });
+    }
+
+    const dealerCards = playDealerTurn(round.dealerCards);
+    const dealerTotal = calculateHandValue(dealerCards);
+    const playerTotal = calculateHandValue(round.playerCards);
+
+    if (dealerTotal > 21) {
+        round.status = "dealer_bust";
+        player.chips += round.bet * 2;
+    } else if (dealerTotal > playerTotal) {
+        round.status = "dealer_win";
+    } else if (playerTotal > dealerTotal) {
+        round.status = "player_win";
+        player.chips += round.bet * 2;
+    } else {
+        round.status = "push";
+        player.chips += round.bet;
+    }
+
+    await round.save();
+    await player.save();
+
+    res.json({
+        success: true,
+        data: {
+            playerCards: round.playerCards,
+            dealerCards,
+            playerTotal,
+            dealerTotal,
             status: round.status,
             chips: player.chips,
         },
