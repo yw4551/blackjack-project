@@ -1,21 +1,18 @@
-import Player from "../models/player.model.js";
-import Round from "../models/round.model.js";
-import { generateCard } from "../utils/card.js";
-import z, { date, success } from "zod";
-import { calculateHandValue } from "../utils/hand.js";
-import { playDealerTurn } from "../utils/dealer.js";
+import {
+    startGameService,
+    startRoundService,
+    myRoundService,
+    hitService,
+    standService,
+} from "../services/game.service.js";
 
 export const startGameController = async (req, res) => {
     try {
-        const newPlayer = new Player();
-        const savedPlayer = await newPlayer.save();
+        const data = await startGameService();
 
         res.status(201).json({
             success: true,
-            data: {
-                playerId: savedPlayer._id,
-                chips: savedPlayer.chips,
-            },
+            data,
         });
     } catch (err) {
         res.status(500).json({
@@ -26,179 +23,72 @@ export const startGameController = async (req, res) => {
 };
 
 export const startRoundController = async (req, res) => {
-    const validatedBet = z.object({
-        bet: z.number().positive(),
-    });
+    try {
+        const data = await startRoundService(req.player, req.body);
 
-    const result = validatedBet.safeParse(req.body);
-
-    if (!result.success) {
-        return res.status(400).json({
+        res.status(201).json({
+            success: true,
+            data,
+        });
+    } catch (err) {
+        res.status(err.statusCode || 500).json({
             success: false,
-            error: "Invalid bet value",
+            error: err.message,
         });
     }
-
-    const player = req.player;
-
-    if (result.data.bet > player.chips) {
-        return res.status(400).json({
-            success: false,
-            error: "You cannot bet more then what you have",
-        });
-    }
-
-    const activeRound = await Round.findOne({
-        playerId: player._id,
-        status: "in_progress",
-    });
-
-    if (activeRound) {
-        return res.status(409).json({
-            success: false,
-            error: "You have an active game",
-        });
-    }
-
-    player.chips = player.chips - result.data.bet;
-
-    await player.save();
-
-    const playerCards = [generateCard(), generateCard()];
-    const dealerCards = [generateCard(), generateCard()];
-
-    const round = new Round({
-        playerId: player._id,
-        bet: result.data.bet,
-        playerCards,
-        dealerCards,
-        status: "in_progress",
-    });
-
-    const savedRound = await round.save();
-
-    const response = {
-        roundId: savedRound._id,
-        playerCards: savedRound.playerCards,
-        dealerUpCard: savedRound.dealerCards[0],
-        chips: player.chips,
-    };
-
-    res.status(201).json({
-        success: true,
-        data: response,
-    });
 };
 
 export const myRoundController = async (req, res) => {
-    const player = req.player;
+    try {
+        const data = await myRoundService(req.player);
 
-    const round = await Round.findOne({
-        playerId: player._id,
-        status: "in_progress",
-    });
+        if (!data) {
+            return res.json({
+                success: true,
+                round: null,
+            });
+        }
 
-    if (!round) {
-        return res.json({
+        res.json({
             success: true,
-            round: null,
+            data,
+        });
+    } catch (err) {
+        res.status(500).json({
+            success: false,
+            error: err.message,
         });
     }
-
-    const response = {
-        roundId: round._id,
-        playerCards: round.playerCards,
-        dealerUpCard: round.dealerCards[0],
-        bet: round.bet,
-        status: round.status,
-    };
-
-    res.json({
-        success: true,
-        data: response,
-    });
 };
 
 export const hitController = async (req, res) => {
-    const player = req.player;
+    try {
+        const data = await hitService(req.player);
 
-    const round = await Round.findOne({
-        playerId: player._id,
-        status: "in_progress",
-    });
-
-    if (!round) {
-        return res.status(404).json({
+        res.json({
+            success: true,
+            data,
+        });
+    } catch (err) {
+        res.status(err.statusCode || 500).json({
             success: false,
-            error: "No active round",
+            error: err.message,
         });
     }
-
-    const newCard = generateCard();
-    round.playerCards.push(newCard);
-    const playerTotal = calculateHandValue(round.playerCards);
-
-    if (playerTotal > 21) {
-        round.status = "player_bust";
-    }
-
-    await round.save();
-
-    res.json({
-        success: true,
-        data: {
-            playerCards: round.playerCards,
-            playerTotal,
-            status: round.status,
-            chips: player.chips,
-        },
-    });
 };
 
 export const standController = async (req, res) => {
-    const player = req.player;
+    try {
+        const data = await standService(req.player);
 
-    const round = await Round.findOne({
-        playerId: player._id,
-        status: "in_progress",
-    });
-
-    if (!round) {
-        return res.status(404).json({
+        res.json({
+            success: true,
+            data,
+        });
+    } catch (err) {
+        res.status(err.statusCode || 500).json({
             success: false,
-            error: "No active round",
+            error: err.message,
         });
     }
-
-    const dealerCards = playDealerTurn(round.dealerCards);
-    const dealerTotal = calculateHandValue(dealerCards);
-    const playerTotal = calculateHandValue(round.playerCards);
-
-    if (dealerTotal > 21) {
-        round.status = "dealer_bust";
-        player.chips += round.bet * 2;
-    } else if (dealerTotal > playerTotal) {
-        round.status = "dealer_win";
-    } else if (playerTotal > dealerTotal) {
-        round.status = "player_win";
-        player.chips += round.bet * 2;
-    } else {
-        round.status = "push";
-        player.chips += round.bet;
-    }
-
-    await round.save();
-    await player.save();
-
-    res.json({
-        success: true,
-        data: {
-            playerCards: round.playerCards,
-            dealerCards,
-            playerTotal,
-            dealerTotal,
-            status: round.status,
-            chips: player.chips,
-        },
-    });
 };
