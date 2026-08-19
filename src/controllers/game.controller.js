@@ -1,7 +1,8 @@
 import Player from "../models/player.model.js";
 import Round from "../models/round.model.js";
 import { generateCard } from "../utils/card.js";
-import z, { date } from "zod";
+import z, { date, success } from "zod";
+import { calculateHandValue } from "../utils/hand.js";
 
 export const startGameController = async (req, res) => {
     try {
@@ -114,5 +115,41 @@ export const myRoundController = async (req, res) => {
     res.json({
         success: true,
         data: response,
+    });
+};
+
+export const hitController = async (req, res) => {
+    const player = req.player;
+
+    const round = await Round.findOne({
+        playerId: player._id,
+        status: "in_progress",
+    });
+
+    if (!round) {
+        return res.status(404).json({
+            success: false,
+            error: "No active round",
+        });
+    }
+
+    const newCard = generateCard();
+    round.playerCards.push(newCard);
+    const playerTotal = calculateHandValue(round.playerCards);
+
+    if (playerTotal > 21) {
+        round.status = "player_bust";
+    }
+
+    await round.save();
+
+    res.json({
+        success: true,
+        data: {
+            playerCards: round.playerCards,
+            playerTotal,
+            status: round.status,
+            chips: player.chips,
+        },
     });
 };
