@@ -57,7 +57,7 @@ describe("hitController", () => {
         assert.equal(res.body.data.playerTotal, expectedTotal);
     });
 
-    test.todo("player busts when total is above 21", async () => {
+    test("player busts when total is above 21", async () => {
         const res = createRes();
 
         const fakeRound = {
