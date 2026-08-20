@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>BlackJack Game</title>
+        <link rel="stylesheet" href="style.css" />
+        <script src="app.js" defer></script>
+    </head>
+
+    <body>
+        <header>
+            <h1>BlackJack Game</h1>
+
+            <div class="player-details">
+                <p class="chips"></p>
+                <p class="bet-details"></p>
+            </div>
+        </header>
+
+        <main>
+            <section id="dealer">
+                <p class="dealer-title">Dealer Cards</p>
+                <div class="dealer-cards"></div>
+            </section>
+
+            <section id="player">
+                <p class="player-title">Player Cards</p>
+                <div class="player-cards"></div>
+            </section>
+
+            <section id="game-result"></section>
+
+            <section id="start-round-form">
+                <form>
+                    <label for="bet-input">Bet</label>
+                    <input
+                        type="number"
+                        name="bet-input"
+                        id="bet-input"
+                        placeholder="Enter your bet"
+                        min="1"
+                    />
+
+                    <button type="submit">Start Round</button>
+                </form>
+            </section>
+
+            <section id="btns">
+                <button id="hit-btn" class="hit-btn">Hit</button>
+                <button id="stand-btn" class="stand-btn">Stand</button>
+            </section>
+        </main>
+    </body>
+</html>

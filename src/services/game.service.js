@@ -52,7 +52,6 @@ export const startRoundService = async (player, body) => {
     await player.save();
 
     const playerCards = [generateCard(), generateCard()];
-
     const dealerCards = [generateCard(), generateCard()];
 
     const round = new Round({
@@ -60,6 +59,7 @@ export const startRoundService = async (player, body) => {
         bet,
         playerCards,
         dealerCards,
+        chips: player.chips,
         status: "in_progress",
     });
 

@@ -1,0 +1,58 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root {
+    --color-background: #0a0a0a;
+    --color-table: #075b3a;
+    --color-table-dark: #043d28;
+    --color-gold: #d4af37;
+    --color-gold-light: #f1d875;
+    --color-white: #ffffff;
+    --color-card: #f5f1e8;
+    --color-black: #111111;
+    --color-red: #b22222;
+    --font-main: "Arial", sans-serif;
+    --radius-small: 8px;
+    --radius-medium: 14px;
+    --radius-large: 24px;
+    --shadow-card: 0 10px 25px rgba(0, 0, 0, 0.45);
+    --shadow-gold: 0 0 20px rgba(212, 175, 55, 0.35);
+    --transition-fast: 0.2s ease;
+    --transition-normal: 0.35s ease;
+    --max-width: 1200px;
+    --spacing-small: 10px;
+    --spacing-medium: 20px;
+    --spacing-large: 40px;
+}
+
+body {
+    font-family: var(--font-main);
+    background: var(--color-background);
+    color: var(--color-white);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: var(--spacing-small);
+}
+
+main {
+    width: 100%;
+    max-width: var(--max-width);
+    background:
+        radial-gradient(
+            var(--color-white),
+            var(--color-gold),
+            var(--color-table)
+        ),
+        var(--color-table-dark);
+    border: 3px solid var(--color-gold);
+    border-radius: var(--radius-large);
+    padding: var(--spacing-large);
+    box-shadow: var(--color-gold-light) 0 20px 50px rgba(0, 0, 0, 0.7);
+    position: relative;
+    overflow: hidden;
+}
